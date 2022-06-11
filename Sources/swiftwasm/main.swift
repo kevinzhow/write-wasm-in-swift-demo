@@ -9,26 +9,21 @@ func deallocate(pointer: UnsafeMutableRawPointer) {
   pointer.deallocate()
 }
 
-@_cdecl("change_article_json")
-func changeArticleJSONData(articleJSONDataStrPtr: UnsafeMutableRawPointer, size: Int, newAuthor: UnsafeRawPointer, authorSize: Int, newSize: UnsafeMutablePointer<Int>) -> UnsafeRawPointer {
-    
-    let jsonData = Data(bytes: articleJSONDataStrPtr, count: size)
+@_cdecl("change_article_proto")
+func changeBookProto(protoData: UnsafeMutableRawPointer,  size: Int,  newAuthor: UnsafeRawPointer, authorSize: Int, newSize: UnsafeMutablePointer<Int>) -> UnsafeRawPointer {
+    // Decode proto binary data
+    let data = Data(bytes: protoData, count: size)
+    var book = try! BookInfo(serializedData: data)
 
-    // Decode Data into Struct
-    let decoder = JSONDecoder()
-    var article = try! decoder.decode(Article.self, from: jsonData)
-    // Modify the author
-    article.author =  String(data: Data(bytes: newAuthor, count: authorSize), encoding: .utf8)!
+    // Change author
+    book.author =  String(data: Data(bytes: newAuthor, count: authorSize), encoding: .utf8)!
 
-    let encoder = JSONEncoder()
+    let newData = try! book.serializedData()
+    newSize.pointee = newData.count
 
-    // Encode the struct into data
-    let newStrData = try! encoder.encode(article)
-    // Count the data byte length
-    newSize.pointee = newStrData.count
+    // get the data pointer of the new book proto data
+    let pointer = newData.withUnsafeBytes{ (bufferRawBufferPointer) -> UnsafeRawPointer in
 
-    // Get Pointer of the data
-    let pointer = newStrData.withUnsafeBytes{ (bufferRawBufferPointer) -> UnsafeRawPointer in
         let bufferPointer: UnsafePointer<UInt8> = bufferRawBufferPointer.baseAddress!.assumingMemoryBound(to: UInt8.self)
         return UnsafeRawPointer(bufferPointer)
     }
