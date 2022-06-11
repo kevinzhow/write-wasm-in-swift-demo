@@ -3,7 +3,7 @@
 ## Build
 
 ```
-swift build --triple wasm32-unknown-wasi  -c release
+swift build --triple wasm32-unknown-wasi  -c release -Xlinker --allow-undefined
 ```
 
 ## Copy Build result
